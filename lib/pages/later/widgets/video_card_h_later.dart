@@ -10,12 +10,16 @@ import 'package:PiliPlus/http/search.dart';
 import 'package:PiliPlus/models/common/badge_type.dart';
 import 'package:PiliPlus/models/common/stat_type.dart';
 import 'package:PiliPlus/models_new/later/list.dart';
+import 'package:PiliPlus/models_new/video/video_ai_conclusion/model_result.dart';
 import 'package:PiliPlus/pages/later/controller.dart';
+import 'package:PiliPlus/pages/later/widgets/ai_summary_before_play_sheet.dart';
 import 'package:PiliPlus/utils/duration_utils.dart';
+import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:PiliPlus/utils/page_utils.dart';
 import 'package:PiliPlus/utils/platform_utils.dart';
 import 'package:flutter/material.dart' hide LayoutBuilder;
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
+import 'package:get/get.dart';
 
 // 视频卡片 - 水平布局
 class VideoCardHLater extends StatelessWidget {
@@ -25,11 +29,15 @@ class VideoCardHLater extends StatelessWidget {
     required this.index,
     required this.videoItem,
     required this.onViewLater,
+    this.aiSummary,
+    this.onLoadAiSummary,
   });
   final int index;
   final BaseLaterController ctr;
   final LaterItemModel videoItem;
   final ValueChanged<int> onViewLater;
+  final AiConclusionResult? aiSummary;
+  final VoidCallback? onLoadAiSummary;
 
   @override
   Widget build(BuildContext context) {
@@ -61,6 +69,43 @@ class VideoCardHLater extends StatelessWidget {
                     PageUtils.viewPgcFromUri(videoItem.redirectUrl!);
                   }
                   return;
+                }
+                if (Pref.showAiBeforePlay) {
+                  final aiResult = await ctr.loadAiSummary(
+                    videoItem.bvid ?? '',
+                    videoItem.cid,
+                    upMid: videoItem.owner?.mid,
+                  );
+                  if (aiResult?.summary?.isNotEmpty == true ||
+                      aiResult?.outline?.isNotEmpty == true) {
+                    if (!context.mounted) return;
+                    showAiSummaryBeforePlaySheet(
+                      context: context,
+                      title: videoItem.title ?? '',
+                      pic: videoItem.pic,
+                      aiResult: aiResult,
+                      onPlay: () async {
+                        Get.back();
+                        try {
+                          final cid = videoItem.cid ??
+                              await SearchHttp.ab2c(
+                                aid: videoItem.aid,
+                                bvid: videoItem.bvid,
+                              );
+                          if (cid != null) {
+                            onViewLater(cid);
+                          }
+                        } catch (err) {
+                          SmartDialog.showToast(err.toString());
+                        }
+                      },
+                      onRemove: () {
+                        Get.back();
+                        ctr.toViewDel(context, index, videoItem.aid);
+                      },
+                    );
+                    return;
+                  }
                 }
                 try {
                   final cid =
@@ -248,6 +293,10 @@ class VideoCardHLater extends StatelessWidget {
                         ),
                       ],
                     ),
+                    if (Pref.showAiInLater) ...[
+                      const SizedBox(height: 4),
+                      _buildAiSummarySection(theme),
+                    ],
                   ],
           ),
           Positioned(
@@ -263,5 +312,70 @@ class VideoCardHLater extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Widget _buildAiSummarySection(ThemeData theme) {
+    if (aiSummary != null && aiSummary!.summary?.isNotEmpty == true) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(
+              Icons.smart_toy_outlined,
+              size: 14,
+              color: theme.colorScheme.primary,
+            ),
+            const SizedBox(width: 4),
+            Expanded(
+              child: Text(
+                aiSummary!.summary!,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 12,
+                  height: 1.4,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    } else if (onLoadAiSummary != null) {
+      return GestureDetector(
+        onTap: onLoadAiSummary,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.smart_toy_outlined,
+                size: 12,
+                color: theme.colorScheme.outline,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                '点击加载AI总结',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: theme.colorScheme.outline,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+    return const SizedBox.shrink();
   }
 }

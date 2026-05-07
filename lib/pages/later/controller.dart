@@ -1,18 +1,22 @@
 import 'package:PiliPlus/common/widgets/dialog/dialog.dart';
 import 'package:PiliPlus/http/loading_state.dart';
 import 'package:PiliPlus/http/user.dart';
+import 'package:PiliPlus/http/video.dart';
 import 'package:PiliPlus/models/common/later_view_type.dart';
 import 'package:PiliPlus/models/common/video/source_type.dart';
 import 'package:PiliPlus/models_new/later/data.dart';
 import 'package:PiliPlus/models_new/later/list.dart';
+import 'package:PiliPlus/models_new/video/video_ai_conclusion/model_result.dart';
 import 'package:PiliPlus/pages/common/common_list_controller.dart'
     show CommonListController;
 import 'package:PiliPlus/pages/common/multi_select/base.dart';
 import 'package:PiliPlus/pages/common/multi_select/multi_select_controller.dart';
 import 'package:PiliPlus/pages/later/base_controller.dart';
+import 'package:PiliPlus/services/ai_summary_cache.dart';
 import 'package:PiliPlus/utils/accounts.dart';
 import 'package:PiliPlus/utils/extension/scroll_controller_ext.dart';
 import 'package:PiliPlus/utils/page_utils.dart';
+import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:get/get.dart';
@@ -22,7 +26,32 @@ mixin BaseLaterController
         CommonListController<LaterData, LaterItemModel>,
         CommonMultiSelectMixin<LaterItemModel>,
         DeleteItemMixin<LaterData, LaterItemModel> {
+  final aiSummaryCache = AiSummaryCache();
+
   ValueChanged<int>? updateCount;
+
+  Future<AiConclusionResult?> loadAiSummary(
+    String bvid,
+    int? cid, {
+    int? upMid,
+  }) async {
+    if (cid == null) return null;
+    final cached = aiSummaryCache.get(bvid, cid);
+    if (cached != null) return cached;
+    final res = await VideoHttp.aiConclusion(
+      bvid: bvid,
+      cid: cid,
+      upMid: upMid,
+    );
+    if (res case Success(:final response)) {
+      final result = response.modelResult;
+      if (result != null) {
+        aiSummaryCache.set(bvid, cid, result);
+      }
+      return result;
+    }
+    return null;
+  }
 
   @override
   void onRemove() {
@@ -92,6 +121,8 @@ class LaterController extends MultiSelectController<LaterData, LaterItemModel>
 
   final RxBool asc = false.obs;
 
+  int _activeRequests = 0;
+
   final LaterBaseController baseCtr = Get.put(LaterBaseController());
 
   @override
@@ -117,6 +148,21 @@ class LaterController extends MultiSelectController<LaterData, LaterItemModel>
   List<LaterItemModel>? getDataList(response) {
     baseCtr.counts[laterViewType.index] = response.count ?? 0;
     return response.list;
+  }
+
+  Future<void> autoLoadAiSummaries(List<LaterItemModel> items) async {
+    if (!Pref.autoLoadAiSummary) return;
+    for (final item in items) {
+      if (_activeRequests >= 3) break;
+      if (item.bvid == null || item.cid == null) continue;
+      if (aiSummaryCache.contains(item.bvid!, item.cid)) continue;
+      _activeRequests++;
+      loadAiSummary(item.bvid!, item.cid).whenComplete(() {
+        _activeRequests--;
+        loadingState.refresh();
+      });
+      await Future.delayed(const Duration(milliseconds: 200));
+    }
   }
 
   @override
