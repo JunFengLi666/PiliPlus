@@ -517,6 +517,27 @@ List<SettingsModel> get extraSettings => [
     defaultVal: false,
   ),
   const SwitchModel(
+    title: '稍后观看显示AI总结',
+    subtitle: '在稍后观看列表中显示视频AI总结摘要',
+    leading: Icon(Icons.smart_toy_outlined),
+    setKey: SettingBoxKey.showAiInLater,
+    defaultVal: false,
+  ),
+  const SwitchModel(
+    title: '点击视频前弹出AI总结',
+    subtitle: '点击稍后观看中的视频时先弹出AI总结面板',
+    leading: Icon(Icons.summarize_outlined),
+    setKey: SettingBoxKey.showAiBeforePlay,
+    defaultVal: false,
+  ),
+  const SwitchModel(
+    title: 'AI总结自动加载',
+    subtitle: '进入稍后观看时自动加载可见视频的AI总结',
+    leading: Icon(Icons.auto_awesome_outlined),
+    setKey: SettingBoxKey.autoLoadAiSummary,
+    defaultVal: false,
+  ),
+  const SwitchModel(
     title: '消息页禁用"收到的赞"功能',
     subtitle: '禁止打开入口，降低网络社交依赖',
     leading: Icon(Icons.beach_access_outlined),

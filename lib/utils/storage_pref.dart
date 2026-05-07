@@ -806,6 +806,15 @@ abstract final class Pref {
   static bool get enableAi =>
       _setting.get(SettingBoxKey.enableAi, defaultValue: false);
 
+  static bool get showAiInLater =>
+      _setting.get(SettingBoxKey.showAiInLater, defaultValue: false);
+
+  static bool get showAiBeforePlay =>
+      _setting.get(SettingBoxKey.showAiBeforePlay, defaultValue: false);
+
+  static bool get autoLoadAiSummary =>
+      _setting.get(SettingBoxKey.autoLoadAiSummary, defaultValue: false);
+
   static bool get enableOnlineTotal =>
       _setting.get(SettingBoxKey.enableOnlineTotal, defaultValue: false);
 

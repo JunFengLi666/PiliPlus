@@ -10,6 +10,7 @@ import 'package:PiliPlus/pages/later/widgets/video_card_h_later.dart';
 import 'package:PiliPlus/utils/extension/get_ext.dart';
 import 'package:PiliPlus/utils/grid.dart';
 import 'package:PiliPlus/utils/page_utils.dart';
+import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -100,6 +101,17 @@ class _LaterViewChildPageState extends State<LaterViewChildPage>
                             : null,
                       );
                     },
+                    aiSummary: _laterController.aiSummaryCache.get(videoItem.bvid ?? '', videoItem.cid),
+                    onLoadAiSummary: Pref.showAiInLater && !Pref.autoLoadAiSummary
+                        ? () async {
+                            await _laterController.loadAiSummary(
+                              videoItem.bvid ?? '',
+                              videoItem.cid,
+                              upMid: videoItem.owner?.mid,
+                            );
+                            _laterController.loadingState.refresh();
+                          }
+                        : null,
                   );
                 },
                 itemCount: response.length,
