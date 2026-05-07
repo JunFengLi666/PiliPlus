@@ -3,9 +3,8 @@ import 'package:flutter/material.dart';
 
 enum LaterViewType {
   all(0, '全部'),
-  // toView(1, '未看'),
   unfinished(2, '未看完'),
-  // viewed(3, '已看完'),
+  aiSummary(4, 'AI总结'),
   ;
 
   Widget get page => LaterViewChildPage(laterViewType: this);

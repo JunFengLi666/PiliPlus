@@ -66,6 +66,7 @@ abstract final class SettingBoxKey {
       enableSearchWord = 'enableSearchWord',
       enableSystemProxy = 'enableSystemProxy',
       enableAi = 'enableAi',
+      enableAiSummaryTab = 'enableAiSummaryTab',
       disableLikeMsg = 'disableLikeMsg',
       defaultHomePage = 'defaultHomePage',
       previewQuality = 'previewQuality',

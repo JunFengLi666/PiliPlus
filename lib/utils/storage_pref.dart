@@ -806,6 +806,9 @@ abstract final class Pref {
   static bool get enableAi =>
       _setting.get(SettingBoxKey.enableAi, defaultValue: false);
 
+  static bool get enableAiSummaryTab =>
+      _setting.get(SettingBoxKey.enableAiSummaryTab, defaultValue: false);
+
   static bool get enableOnlineTotal =>
       _setting.get(SettingBoxKey.enableOnlineTotal, defaultValue: false);
 

@@ -517,6 +517,13 @@ List<SettingsModel> get extraSettings => [
     defaultVal: false,
   ),
   const SwitchModel(
+    title: '稍后再看显示AI总结Tab',
+    subtitle: '在稍后再看页面显示AI总结标签页',
+    leading: Icon(Icons.summarize_outlined),
+    setKey: SettingBoxKey.enableAiSummaryTab,
+    defaultVal: false,
+  ),
+  const SwitchModel(
     title: '消息页禁用"收到的赞"功能',
     subtitle: '禁止打开入口，降低网络社交依赖',
     leading: Icon(Icons.beach_access_outlined),

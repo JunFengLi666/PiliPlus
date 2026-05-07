@@ -14,6 +14,7 @@ import 'package:PiliPlus/utils/accounts.dart';
 import 'package:PiliPlus/utils/extension/get_ext.dart';
 import 'package:PiliPlus/utils/extension/scroll_controller_ext.dart';
 import 'package:PiliPlus/utils/request_utils.dart';
+import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:flutter/material.dart' hide TabBarView;
 import 'package:get/get.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
@@ -28,10 +29,22 @@ class LaterPage extends StatefulWidget {
 class _LaterPageState extends State<LaterPage>
     with SingleTickerProviderStateMixin {
   final LaterBaseController _baseCtr = Get.put(LaterBaseController());
-  late final TabController _tabController;
+  late TabController _tabController;
+
+  List<LaterViewType> get _visibleViewTypes {
+    final types = <LaterViewType>[LaterViewType.all, LaterViewType.unfinished];
+    if (Pref.enableAiSummaryTab) {
+      types.add(LaterViewType.aiSummary);
+    }
+    return types;
+  }
+
+  LaterViewType _getViewTypeByIndex(int index) => _visibleViewTypes[index];
+
+  int _getViewTypeIndex(LaterViewType type) => _visibleViewTypes.indexOf(type);
 
   LaterController currCtr([int? index]) {
-    final type = LaterViewType.values[index ?? _tabController.index];
+    final type = index != null ? _getViewTypeByIndex(index) : _getViewTypeByIndex(_tabController.index);
     return Get.putOrFind(
       () => LaterController(type),
       tag: type.type.toString(),
@@ -47,9 +60,24 @@ class _LaterPageState extends State<LaterPage>
   void initState() {
     super.initState();
     _tabController = TabController(
-      length: LaterViewType.values.length,
+      length: _visibleViewTypes.length,
       vsync: this,
     )..addListener(listener);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final newLength = _visibleViewTypes.length;
+    if (_tabController.length != newLength) {
+      final currentIndex = _tabController.index.clamp(0, newLength - 1);
+      _tabController.dispose();
+      _tabController = TabController(
+        length: newLength,
+        vsync: this,
+        initialIndex: currentIndex,
+      )..addListener(listener);
+    }
   }
 
   @override
@@ -113,20 +141,30 @@ class _LaterPageState extends State<LaterPage>
               child: Column(
                 children: [
                   TabBar(
-                    // isScrollable: true,
-                    // tabAlignment: TabAlignment.start,
                     controller: _tabController,
-                    tabs: LaterViewType.values.map((item) {
+                    tabs: _visibleViewTypes.map((item) {
                       final count = _baseCtr.counts[item.index];
                       return Tab(
                         text: '${item.title}${count != -1 ? '($count)' : ''}',
                       );
                     }).toList(),
-                    onTap: (_) {
+                    onTap: (index) {
                       if (!_tabController.indexIsChanging) {
-                        currCtr().scrollController.animToTop();
+                        final currentType = _getViewTypeByIndex(index);
+                        if (currentType != LaterViewType.aiSummary) {
+                          final ctr = Get.find<LaterController>(
+                            tag: currentType.type.toString(),
+                          );
+                          ctr.scrollController.animToTop();
+                        }
                       } else if (enableMultiSelect) {
-                        currCtr(_tabController.previousIndex).handleSelect();
+                        final prevType = _getViewTypeByIndex(_tabController.previousIndex);
+                        if (prevType != LaterViewType.aiSummary) {
+                          final ctr = Get.find<LaterController>(
+                            tag: prevType.type.toString(),
+                          );
+                          ctr.handleSelect();
+                        }
                       }
                     },
                   ),
@@ -138,7 +176,7 @@ class _LaterPageState extends State<LaterPage>
                       controller: _tabController,
                       horizontalDragGestureRecognizer:
                           CustomHorizontalDragGestureRecognizer.new,
-                      children: LaterViewType.values
+                      children: _visibleViewTypes
                           .map((item) => item.page)
                           .toList(),
                     ),

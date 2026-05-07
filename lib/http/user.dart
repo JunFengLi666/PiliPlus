@@ -6,6 +6,7 @@ import 'package:PiliPlus/models/user/stat.dart';
 import 'package:PiliPlus/models_new/coin_log/data.dart';
 import 'package:PiliPlus/models_new/follow/data.dart';
 import 'package:PiliPlus/models_new/history/data.dart';
+import 'package:PiliPlus/models_new/later/ai_summary_data.dart';
 import 'package:PiliPlus/models_new/later/data.dart';
 import 'package:PiliPlus/models_new/login_log/data.dart';
 import 'package:PiliPlus/models_new/media_list/data.dart';
@@ -76,6 +77,28 @@ abstract final class UserHttp {
     );
     if (res.data['code'] == 0) {
       return Success(LaterData.fromJson(res.data['data']));
+    } else {
+      return Error(res.data['message']);
+    }
+  }
+
+  // AI总结稍后再看列表
+  static Future<LoadingState<LaterAiSummaryData>> laterAiSummaryList({
+    required int page,
+    bool asc = false,
+  }) async {
+    final res = await Request().get(
+      Api.laterAiSummary,
+      queryParameters: await WbiSign.makSign({
+        'pn': page,
+        'ps': 20,
+        'asc': asc,
+        'need_split': true,
+        'web_location': 333.882,
+      }),
+    );
+    if (res.data['code'] == 0) {
+      return Success(LaterAiSummaryData.fromJson(res.data['data']));
     } else {
       return Error(res.data['message']);
     }

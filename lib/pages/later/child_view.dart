@@ -4,6 +4,8 @@ import 'package:PiliPlus/http/loading_state.dart';
 import 'package:PiliPlus/models/common/later_view_type.dart';
 import 'package:PiliPlus/models/common/video/source_type.dart';
 import 'package:PiliPlus/models_new/later/list.dart';
+import 'package:PiliPlus/pages/later/ai_summary_controller.dart';
+import 'package:PiliPlus/pages/later/ai_summary_view.dart';
 import 'package:PiliPlus/pages/later/base_controller.dart';
 import 'package:PiliPlus/pages/later/controller.dart';
 import 'package:PiliPlus/pages/later/widgets/video_card_h_later.dart';
@@ -33,15 +35,27 @@ class _LaterViewChildPageState extends State<LaterViewChildPage>
   @override
   void initState() {
     super.initState();
-    _laterController = Get.put(
-      LaterController(widget.laterViewType),
-      tag: widget.laterViewType.type.toString(),
-    );
+    if (widget.laterViewType == LaterViewType.aiSummary) {
+      Get.put(
+        LaterAiSummaryController(),
+        tag: widget.laterViewType.type.toString(),
+      );
+    } else {
+      _laterController = Get.put(
+        LaterController(widget.laterViewType),
+        tag: widget.laterViewType.type.toString(),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
+
+    if (widget.laterViewType == LaterViewType.aiSummary) {
+      return const LaterAiSummaryView();
+    }
+
     return refreshIndicator(
       onRefresh: _laterController.onRefresh,
       child: CustomScrollView(

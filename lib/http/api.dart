@@ -395,6 +395,9 @@ abstract final class Api {
   // 清空稍后再看
   static const String toViewClear = '/x/v2/history/toview/clear';
 
+  // AI总结稍后再看列表
+  static const String laterAiSummary = '/x/web-interface/view/conclusion/get_batch';
+
   // 追番
   static const String pgcAdd = '/pgc/web/follow/add';
 
